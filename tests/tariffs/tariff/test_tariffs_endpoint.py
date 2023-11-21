@@ -52,7 +52,29 @@ class TestTariffEndpoints:
         
         assert status.HTTP_400_BAD_REQUEST == response.status_code
         assert 'Start date must be before' in error['non_field_errors'][0]
-    
+
+    # Teste que verifica que a data FINAL da tarifa (contrato) não pode ser antes
+    # da data inicial da tarifa
+    def test_rejects_end_date_before_start_date(self):
+
+        # Cria uma variável há 7 dias atrás
+        lastweek = (TODAY - timedelta(days=7)) 
+
+        # Chama a função para criar a tarifa passando os valores de Hoje para o começo
+        # e 7 dias atrás para o término
+        tariff_dict = self._create_tariff_dict(start_date=TODAY, end_date=lastweek)
+
+        #Verifica as respostas do Endpoint
+        response = self.client.post(ENDPOINT, tariff_dict, format='json')
+        error = json.loads(response.content)
+        
+        # Assegura que a resposta é 400 como esperado
+        assert status.HTTP_400_BAD_REQUEST == response.status_code
+        assert 'Start date must be before' in error['non_field_errors'][0]
+
+ 
+
+
     def test_rejects_tariffs_with_the_same_subgroup_for_the_same_distributor(self):
         t = self._create_tariff_dict()
         tariff = Tariff.objects.create(subgroup=t['subgroup'], flag=Tariff.BLUE, distributor=self.distributor1, **t['blue'], start_date=t['start_date'], end_date=t['end_date'])
